@@ -8,6 +8,7 @@ import (
 	"notification-service/internal/config"
 	"notification-service/internal/domain"
 	"notification-service/internal/domain/enum"
+	"notification-service/internal/redis"
 	"notification-service/internal/service"
 )
 
@@ -17,6 +18,7 @@ type KafkaConsumer struct {
 	topic          string
 	codec          *goavro.Codec
 	senderAdapters map[enum.SenderType]service.ISenderAdapter
+	redisClient    *redis.RedisClient
 }
 
 func NewKafkaConsumer(
@@ -25,6 +27,7 @@ func NewKafkaConsumer(
 	topic string,
 	codec *goavro.Codec,
 	senderAdapters map[enum.SenderType]service.ISenderAdapter,
+	redisClient *redis.RedisClient,
 ) *KafkaConsumer {
 	consumer, err := kafka.NewConsumer(&kafka.ConfigMap{
 		"bootstrap.servers":  cfg.KafkaHost,
@@ -41,6 +44,7 @@ func NewKafkaConsumer(
 		topic:          topic,
 		codec:          codec,
 		senderAdapters: senderAdapters,
+		redisClient:    redisClient,
 	}
 }
 
@@ -61,12 +65,38 @@ func (kc *KafkaConsumer) Consume() {
 		kc.commonConsume(kc.topic)
 		break
 	case "NewUser":
-		// TODO
+		kc.consumeNewUser(kc.topic)
 		break
 	}
 }
 
-// TODO: consume message for NewUser ---> redis
+func (kc *KafkaConsumer) consumeNewUser(topic string) {
+	kc.log.Info(fmt.Sprintf("Started consuming %s", topic))
+
+	for {
+		msg, err := kc.consumer.ReadMessage(-1)
+		if err != nil {
+			kc.log.Error(fmt.Sprintf("Error reading from topic  %s", topic), err)
+			continue
+		}
+
+		kc.log.Info(fmt.Sprintf("New message from topic %s", topic))
+
+		native, _, err := kc.codec.NativeFromTextual(msg.Value)
+		if err != nil {
+			kc.log.Error(fmt.Sprintf("Incorrect message while handling %s", topic), string(msg.Value), err)
+			kc.commitMessage(msg)
+			continue
+		}
+
+		nativeMap := native.(map[string]interface{})
+		username := nativeMap["username"].(string)
+		email := nativeMap["email"].(string)
+		kc.redisClient.SetData("users."+username, email, nil)
+
+		kc.commitMessage(msg)
+	}
+}
 
 func (kc *KafkaConsumer) commonConsume(topic string) {
 	kc.log.Info(fmt.Sprintf("Started consuming %s", topic))

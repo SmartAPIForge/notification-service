@@ -13,6 +13,7 @@ import (
 var schemasForThisService = map[string]*goavro.Codec{
 	"NewZip":        nil,
 	"DeployPayload": nil,
+	"NewUser":       nil,
 }
 
 type SchemaManager struct {

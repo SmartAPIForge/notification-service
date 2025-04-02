@@ -25,11 +25,11 @@ func NewApp(
 	s3Client := s3.NewS3Client(cfg)
 
 	senderAdapters := map[enum.SenderType]service.ISenderAdapter{}
-	senderAdapters[enum.Mail] = mail.NewSenderMailAdapter(redisClient, s3Client)
+	senderAdapters[enum.Mail] = mail.NewSenderMailAdapter(redisClient, s3Client, cfg)
 
 	schemaManager := kafka.NewSchemaManager(cfg)
 	for topic, codec := range schemaManager.Schemas {
-		consumer := kafka.NewKafkaConsumer(log, cfg, topic, codec, senderAdapters)
+		consumer := kafka.NewKafkaConsumer(log, cfg, topic, codec, senderAdapters, redisClient)
 		consumer.Sub()
 		go func(consumer *kafka.KafkaConsumer) {
 			for {

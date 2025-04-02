@@ -18,6 +18,8 @@ type Config struct {
 	S3Bucket          string
 	SchemaRegistryUrl string
 	KafkaHost         string
+	SmtpLogin         string
+	SmtpPassword      string
 }
 
 type GRPCConfig struct {
@@ -37,6 +39,8 @@ func MustLoad() *Config {
 	s3Bucket := mustGetEnv("S3_BUCKET")
 	schemaRegistryUrl := getEnv("SCHEMA_REGISTRY_URL", "http://localhost:6767")
 	kafkaHost := getEnv("KAFKA_HOST", "http://localhost:9092")
+	smtpLogin := mustGetEnv("SMTP_LOGIN")
+	smtpPassword := mustGetEnv("SMTP_PASSWORD")
 
 	return &Config{
 		Env:               env,
@@ -48,6 +52,8 @@ func MustLoad() *Config {
 		S3Bucket:          s3Bucket,
 		SchemaRegistryUrl: schemaRegistryUrl,
 		KafkaHost:         kafkaHost,
+		SmtpLogin:         smtpLogin,
+		SmtpPassword:      smtpPassword,
 	}
 }
 
