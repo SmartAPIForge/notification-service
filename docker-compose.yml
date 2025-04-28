@@ -3,7 +3,7 @@ services:
     image: redis:latest
     container_name: notification-redis
     ports:
-      - "5252:6379"
+      - "5254:6379"
     volumes:
       - notification_redis_data:/data
     command: ["redis-server", "--appendonly", "yes"]
