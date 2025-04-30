@@ -2,6 +2,8 @@
 
 This service delivers a user's project data
 
+Avaliable: Mail
+
 ### Get prepared:
 
 1) Fill .env file in project root (check .env.xmpl as reference)
